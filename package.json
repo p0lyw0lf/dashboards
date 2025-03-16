@@ -9,10 +9,14 @@
     "observable": "observable"
   },
   "dependencies": {
-    "@observablehq/framework": "^1.13.2",
-    "ua-parser-js": "^2.0.3"
+    "@observablehq/framework": "^1.13.2"
   },
   "engines": {
     "node": ">=18"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }

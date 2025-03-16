@@ -1,4 +1,5 @@
 PyYAML
+pyarrow
 
 # For pyright
 autopep8

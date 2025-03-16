@@ -18,19 +18,22 @@
       {
         devShells.default = pkgs.mkShell {
           venvDir = ".venv";
-          packages =
-            (with pkgs; [
+          packages = (
+            with pkgs;
+            [
               awscli2
               nodejs
               python312
-            ])
-            ++ (with pkgs.python312Packages; [
-              pip
-              venvShellHook
-            ])
+            ]
             ++ (with pkgs.nodePackages; [
               pnpm
-            ]);
+            ])
+            ++ (with pkgs.python312Packages; [
+              autopep8
+              pyarrow
+              pyyaml
+            ])
+          );
         };
       }
     );

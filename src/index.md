@@ -1,6 +1,6 @@
 ---
 sql:
-  github_blog: ./github_blog.tsv
+  github_blog: ./github_blog.parquet
 ---
 
 # dashboards

@@ -3,8 +3,13 @@
 from datetime import date, timedelta
 import glob
 import importlib.resources as impresources
+import io
 import os
 import subprocess
+import sys
+
+import pyarrow.csv as pv
+import pyarrow.parquet as pq
 
 from secrets import secrets
 
@@ -24,8 +29,11 @@ def sync_logs(site_name: str, days_delta: int = 28):
     output_folder = f"tmp/{bucket}"
 
     # First, sync bucket. This is so we know everything that's inside.
-    p = subprocess.run(["aws", "s3", "sync", "--delete",
-                       f"s3://{bucket}", output_folder], stdout=subprocess.PIPE, env=env)
+    p = subprocess.run(
+        ["aws", "s3", "sync", "--delete", f"s3://{bucket}", output_folder],
+        stdout=subprocess.PIPE,
+        env=env,
+    )
     p.check_returncode()
 
     # Then, find all the folders that are before a certain cutoff
@@ -43,15 +51,29 @@ def sync_logs(site_name: str, days_delta: int = 28):
 
     # Then, remove all those folders
     for folder in to_remove:
-        p = subprocess.run(["aws", "s3", "rm", "--recursive",
-                           f"s3://{bucket}/{folder}"], stdout=subprocess.PIPE, env=env)
+        p = subprocess.run(
+            ["aws", "s3", "rm", "--recursive", f"s3://{bucket}/{folder}"],
+            stdout=subprocess.PIPE,
+            env=env,
+        )
         p.check_returncode()
 
         p = subprocess.run(
-            ["rm", "-rf", f"{output_folder}/{folder}"], stdout=subprocess.PIPE)
+            ["rm", "-rf", f"{output_folder}/{folder}"],
+            stdout=subprocess.PIPE,
+        )
         p.check_returncode()
 
-    # Finally, generate the CSV from the given folder
+    # Generate the TSV from the given folder
     p = subprocess.run(
-        ["bash", str(folder_to_tsv), str(output_folder)])
+        ["bash", str(folder_to_tsv), str(output_folder)],
+        stdout=subprocess.PIPE,
+    )
     p.check_returncode()
+
+    # Finally, convert the TSV to an Apache Arrow table
+    table = pv.read_csv(io.BytesIO(p.stdout), parse_options=pv.ParseOptions(
+        delimiter="\t", quote_char=False, double_quote=False,
+    ))
+    pq.write_table(table, sys.stdout.buffer)
+    sys.stdout.flush()

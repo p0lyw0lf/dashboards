@@ -25,11 +25,14 @@ ORDER BY date DESC
   hits,
 }));
 const dayPlot = Plot.plot({
+  x: { label: "Day" },
+  y: { label: "Hits" },
   marks: [
     Plot.rectY(hits_per_day, {
       x: "date",
       y: "hits",
       interval: Plot.utcInterval("day"),
+      tip: true,
     }),
   ],
 });
@@ -54,21 +57,37 @@ const uriPage = view(PageButtons("uri", totalUriPages));
 
 ```js
 const hits_per_uri = await sql`
-SELECT "cs-uri-stem", COUNT() as hits
+SELECT "cs-uri-stem" as uri, COUNT() as hits
 FROM github_blog
-GROUP BY "cs-uri-stem"
+GROUP BY uri
 ORDER BY hits DESC
 LIMIT ${uriPageLimit}
 OFFSET ${uriPageLimit * uriPage}
 `;
 
 const uriPlot = Plot.plot({
+  axis: null,
+  marginRight: 130,
+  y: { label: "URI" },
+  x: { label: "Hits" },
   marks: [
-    Plot.ruleY([0]),
-    Plot.barY(hits_per_uri, {
-      x: "cs-uri-stem",
-      y: "hits",
-      sort: { x: "y", order: "descending" },
+    Plot.ruleX([0]),
+    Plot.axisX({ anchor: "bottom", label: null }),
+    Plot.axisX({ anchor: "top" }),
+    Plot.axisY({ ticks: [] }),
+    Plot.barX(hits_per_uri, {
+      y: "uri",
+      x: "hits",
+      sort: { y: "x", order: "descending" },
+      tip: true,
+      fill: "lightblue",
+    }),
+    Plot.text(hits_per_uri, {
+      y: "uri",
+      x: "hits",
+      text: "uri",
+      textAnchor: "start",
+      dx: 3,
     }),
   ],
 });
@@ -79,9 +98,9 @@ const uriPlot = Plot.plot({
 ```js
 const totalReferrers = [
   ...(await sql`
-SELECT COUNT(DISTINCT RTRIM("cs(Referer)", '/')) as count
+SELECT COUNT(DISTINCT SPLIT_PART("cs(Referer)", '/', 3)) as count
 FROM github_blog
-WHERE "cs(Referer)" != '-'
+WHERE SPLIT_PART("cs(Referer)", '/', 3) != ''
 `),
 ][0].count;
 const referrerPageLimit = 10;
@@ -92,27 +111,46 @@ const referrerPage = view(PageButtons("referrer", totalReferrerPages));
 <span>Page ${referrerPage + 1} of ${totalReferrerPages}</span>
 
 ```js
+// TODO: add a toggle between partial (below) and full referrer values
 const hits_per_referrer = await sql`
-SELECT RTRIM("cs(Referer)", '/') as "cs(Referer)", COUNT() as hits
+SELECT SPLIT_PART("cs(Referer)", '/', 3) as referrer, COUNT() as hits
 FROM github_blog
-WHERE "cs(Referer)" != '-'
-GROUP BY RTRIM("cs(Referer)", '/')
+WHERE referrer != ''
+GROUP BY referrer
 ORDER BY hits DESC
 LIMIT ${referrerPageLimit}
 OFFSET ${referrerPageLimit * referrerPage}
 `;
 
 const referrerPlot = Plot.plot({
+  marginRight: 130,
+  y: { label: "Referrer" },
+  x: { label: "Hits" },
   marks: [
-    Plot.ruleY([0]),
-    Plot.barY(hits_per_referrer, {
-      x: "cs(Referer)",
-      y: "hits",
-      sort: { x: "y", order: "descending" },
+    Plot.ruleX([0]),
+    Plot.axisX({ anchor: "bottom", label: null }),
+    Plot.axisX({ anchor: "top" }),
+    Plot.axisY({ ticks: [] }),
+    Plot.barX(hits_per_referrer, {
+      y: "referrer",
+      x: "hits",
+      sort: { y: "x", order: "descending" },
+      tip: true,
+      fill: "pink",
+    }),
+    Plot.text(hits_per_referrer, {
+      y: "referrer",
+      x: "hits",
+      text: "referrer",
+      textAnchor: "start",
+      dx: 3,
     }),
   ],
 });
 ```
 
+</div>
+<div class="card">
+TODO: show all the filtered entries, once I have cross-chart filtering going on
 </div>
 </div>

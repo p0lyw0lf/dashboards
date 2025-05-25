@@ -1,3 +1,9 @@
+# NOT MAINTAINED
+
+i don't use these actually. leaving this up for posterity tho
+
+---
+
 # dashboards
 
 This is an [Observable Framework](https://observablehq.com/framework/) app. To install the required dependencies, run:
